@@ -1,25 +1,17 @@
 package org.cec.brick.app
 
-import Greeting
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import org.cec.brick.subsystem.journal.JournalSubsystem
 import org.cec.brick.ui.CecColors
 import org.cec.brick.ui.CecShapes
@@ -35,32 +27,31 @@ fun App() {
 //        val tabIndex by remember { mutableStateOf(0) }
 //        val tabs = listOf("Home", "Settings", "Diagnostics")
 //        val scope = rememberCoroutineScope()
-        var lastFile by remember { mutableStateOf<JournalSubsystem.JournalFile?>(null) }
+        var journals by remember { mutableStateOf<JournalSubsystem?>(null) }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Button(onClick = {
-//                val lines = Subsystems.Journals.lastJournal()?.lines()
-//                    ?: flowOf("404 journal not found :P")
-                lastFile = Subsystems.Journals.lastJournal()
+                journals = Subsystems.Journals
             }) {
                 Text("press me!")
             }
-            lastFile?.let { LogScreen(it) }
+            journals?.let { LogScreen(it) }
         }
     }
 }
 
 @Composable
-fun LogScreen(file: JournalSubsystem.JournalFile) {
-    val scope = rememberCoroutineScope()
-//    var lines = remember { mutableStateListOf<String>("") }
-    var lines = remember { mutableStateListOf("") }
+fun LogScreen(subsystem: JournalSubsystem) {
+    val lines = remember { mutableStateListOf("") }
     LazyColumn(state = rememberLazyListState()) {
         items(lines.size) {
             Text(lines[it])
         }
     }
-    LaunchedEffect(file) {
-        lines.addAll(file.lines().toList())
+    LaunchedEffect(subsystem) {
+        subsystem.lines()
+            .map {
+                lines.add(it)
+            }.collect()
     }
 }
 
