@@ -4,6 +4,7 @@ import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.cec.brick.event.JournalEvent
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -57,13 +58,14 @@ class JournalSubsystem(
         }
     }
 
+    suspend fun events() = lines().map { JournalEvent.parse(it) }
+
     suspend fun lines(): Flow<String> {
         val journal = ThreadLocal.withInitial { findLastJournal() }
         return channelFlow<String> {
             val emitter = launch(coroutineContext + journal.asContextElement()) {
                 while (true) {
                     val current = journal.get()
-                    println(current)
                     current?.lines()?.let {
                         it.map {
                             send(it)
