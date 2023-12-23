@@ -3,10 +3,7 @@ package org.cec.brick.screens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import org.cec.brick.subsystem.journal.JournalSubsystem
@@ -14,7 +11,9 @@ import java.nio.file.NoSuchFileException
 
 @Composable
 fun LogScreen(subsystem: JournalSubsystem) {
+    var error by remember { mutableStateOf<String?>(null) }
     val items = remember { mutableStateMapOf<String, Long>() }
+    error?.let { Text(it) }
     LazyColumn(state = rememberLazyListState()) {
         val keys = items.keys.toList()
         items(keys.size) {
@@ -29,7 +28,7 @@ fun LogScreen(subsystem: JournalSubsystem) {
                 items[it.name] = num + 1
             }.collect()
         } catch (exc: NoSuchFileException) {
-            println("journal not found: ${exc.message}")
+            error = "journal not found: ${exc.message}"
         }
     }
 }

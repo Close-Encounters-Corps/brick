@@ -30,7 +30,8 @@ fun App() {
                     singleLine = true
                 )
                 Button(onClick = {
-                    journals = JournalSubsystem(path)
+                    val pth = path.ifBlank { null }
+                    journals = JournalSubsystem(pth)
                 }) {
                     Text("press me!")
                 }
