@@ -1,38 +1,76 @@
 package org.cec.brick.engine
 
-import org.cec.brick.api.Brick
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import org.cec.brick.event.BrickEvent
 import org.cec.brick.event.JournalEvent
+import org.cec.brick.util.BrickDsl
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 
 class PipelineEngine : KoinComponent {
-    public val brick by inject<Brick>()
-    private val hooks = mutableListOf<JournalHook>()
+    public val brick by inject<BrickEngine>()
+    private val journalHooks = mutableListOf<JournalHook>()
     private val interceptors = mutableListOf<BrickEventHook>()
 
-    fun onEvent(name: String, hook: PipelineCall<BrickEvent>.() -> Unit) {
+    @BrickDsl
+    fun listenEvent(name: String, hook: suspend PipelineCall<BrickEvent>.() -> Unit) {
         interceptors.add(BrickEventHook(name, hook))
     }
 
-    fun listen(vararg names: String, block: PipelineCall<JournalEvent>.() -> Unit) {
+    /**
+     * Listen and handle journal events.
+     * This method registers a new receiver for each of [names]
+     * which will be called when a new journal event will be emitted.
+     *
+     * @param names event types to handle
+     * @param block call handler
+     * @author      Igor Ovsyannikov
+     */
+    @BrickDsl
+    fun listen(vararg names: String, block: suspend PipelineCall<JournalEvent>.() -> Unit) {
         names.forEach { name ->
-            hooks.add(JournalHook(name, block))
+            val h = JournalHook(name)
+            brick.scope.launch {
+                for (e in h.queue) block(e)
+            }
+            journalHooks.add(h)
         }
     }
 
-    internal fun send(event: JournalEvent) {
+    internal suspend fun send(event: JournalEvent) {
         val call = PipelineCall(event)
-        hooks.forEach {
+        journalHooks.forEach {
             when (it.name) {
-                "*" -> it.block(call)
-                event.name -> it.block(call)
+                "*" -> it.queue.send(call)
+                event.name -> it.queue.send(call)
             }
         }
     }
 
-    class BrickEventHook(val name: String, val block: PipelineCall<BrickEvent>.() -> Unit)
-    class JournalHook(val name: String, val block: PipelineCall<JournalEvent>.() -> Unit)
+    internal suspend fun send(event: BrickEvent) {
+        val call = PipelineCall(event)
+        interceptors.forEach {
+            when (it.name) {
+                "*" -> it.queue.send(call)
+                event.name -> it.queue.send(call)
+            }
+        }
+    }
+
+    class BrickEventHook(
+        val name: String,
+        val block: suspend PipelineCall<BrickEvent>.() -> Unit
+    ) {
+        val queue = Channel<PipelineCall<BrickEvent>>(1000, onBufferOverflow = BufferOverflow.DROP_LATEST)
+    }
+
+    class JournalHook(
+        val name: String,
+    ) {
+        val queue = Channel<PipelineCall<JournalEvent>>(10000, onBufferOverflow = BufferOverflow.DROP_LATEST)
+    }
 }
 

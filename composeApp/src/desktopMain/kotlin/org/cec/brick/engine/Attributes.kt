@@ -2,7 +2,7 @@ package org.cec.brick.engine
 
 import java.util.concurrent.ConcurrentHashMap
 
-public class AttributeKey<T : Any>(
+public class AttributeKey<out T : Any>(
     public val name: String,
     private val type: String
 ) {

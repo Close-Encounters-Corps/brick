@@ -9,10 +9,16 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.cec.brick.engine.BrickEngine
 import org.cec.brick.screens.LogScreen
 import org.cec.brick.subsystem.journal.JournalSubsystem
+import org.cec.brick.subsystem.journal.JournalsKey
 import org.cec.brick.ui.CecColors
 import org.koin.compose.KoinContext
+import org.koin.compose.koinInject
+import kotlin.io.path.Path
 
 @Composable
 fun App() {
@@ -20,9 +26,14 @@ fun App() {
         colorScheme = CecColors(),
     ) {
         KoinContext {
-            var journals by remember { mutableStateOf<JournalSubsystem?>(null) }
+            val brick = koinInject<BrickEngine>()
+            val scope = rememberCoroutineScope()
+            val job = scope.launch { brick.start() }
             var path by remember { mutableStateOf("") }
+            var show by remember { mutableStateOf(false) }
+            var info by remember { mutableStateOf("") }
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(info)
                 TextField(
                     value = path,
                     onValueChange = { path = it },
@@ -30,14 +41,38 @@ fun App() {
                     singleLine = true
                 )
                 Button(onClick = {
-                    val pth = path.ifBlank { null }
-                    journals = JournalSubsystem(pth)
+                    scope.launch {
+                        job.join()
+                        val journals = brick.attributes[JournalsKey]
+                        if (path.isBlank()) return@launch
+                        journals.set(Path(path))
+                    }
                 }) {
-                    Text("press me!")
+                    Text("Update path")
                 }
-                journals?.let { LogScreen(it) }
+                LaunchedEffect(Unit) {
+                    job.join()
+                    show = true
+                }
+                if (show) LogScreen()
+                scope.launch {
+                    job.join()
+                    val journals = brick.attributes[JournalsKey]
+                    while (true) {
+                        info = journals.debugInfo()
+                        delay(200)
+                    }
+                }
             }
         }
     }
 }
 
+fun JournalSubsystem.debugInfo(): String {
+    return buildString {
+        append("Path is:")
+        appendLine(path.get())
+        append("Index is:")
+        appendLine(offset.get())
+    }
+}

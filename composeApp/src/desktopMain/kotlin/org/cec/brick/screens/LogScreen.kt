@@ -1,34 +1,40 @@
 package org.cec.brick.screens
 
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
-import org.cec.brick.subsystem.journal.JournalSubsystem
-import java.nio.file.NoSuchFileException
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.cec.brick.api.Brick
+import org.cec.brick.plugins.StatisticsKey
+import org.koin.compose.koinInject
 
 @Composable
-fun LogScreen(subsystem: JournalSubsystem) {
-    var error by remember { mutableStateOf<String?>(null) }
-    val items = remember { mutableStateMapOf<String, Long>() }
-    error?.let { Text(it) }
-    LazyColumn(state = rememberLazyListState()) {
+fun LogScreen() {
+    val engine = koinInject<Brick>()
+    val scope = rememberCoroutineScope()
+    val items = remember { mutableStateMapOf<String, Int>() }
+    val stats = engine.attributes[StatisticsKey]
+    LazyColumn {
         val keys = items.keys.toList()
+        item(Unit) {
+            Text("size is ${keys.size}")
+        }
         items(keys.size) {
             val item = items[keys[it]]
             Text("${keys[it]} $item lines")
         }
     }
-    LaunchedEffect(subsystem) {
-        try {
-            subsystem.events().onEach {
-                val num = items[it.name] ?: 0
-                items[it.name] = num + 1
-            }.collect()
-        } catch (exc: NoSuchFileException) {
-            error = "journal not found: ${exc.message}"
+    scope.launch {
+        while (true) {
+            stats.withItems {
+                items.clear()
+                items.putAll(it)
+            }
+            delay(500)
         }
     }
 }
