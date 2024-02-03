@@ -1,12 +1,12 @@
-package org.cec.brick.subsystem.journal
+package org.cec.brick.engine.journal
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.cec.brick.engine.BrickEngine
 import org.cec.brick.engine.attributeKeyOf
-import org.cec.brick.event.BrickEvent
-import org.cec.brick.event.JournalEvent
+import org.cec.brick.engine.event.BrickEvent
+import org.cec.brick.engine.event.JournalEvent
 import java.io.File
 import java.nio.file.Path
 import java.time.LocalDateTime

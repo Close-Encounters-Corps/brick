@@ -1,4 +1,4 @@
-package org.cec.brick.event
+package org.cec.brick.engine.event
 
 object JournalEventType {
     val Fileheader = "Fileheader"

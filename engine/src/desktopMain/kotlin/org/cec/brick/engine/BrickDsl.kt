@@ -1,4 +1,4 @@
-package org.cec.brick.util
+package org.cec.brick.engine
 
 @DslMarker
 annotation class BrickDsl

@@ -8,7 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.cec.brick.api.Brick
+import org.cec.brick.engine.api.Brick
 import org.cec.brick.plugins.StatisticsKey
 import org.koin.compose.koinInject
 

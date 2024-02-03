@@ -7,28 +7,28 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import org.cec.brick.api.Brick
-import org.cec.brick.api.BrickPlugin
-import org.cec.brick.event.BrickEvent
-import org.cec.brick.plugins.JournalBuffer
-import org.cec.brick.plugins.StatisticsPlugin
-import org.cec.brick.subsystem.journal.JournalSubsystem
-import org.cec.brick.subsystem.journal.JournalsKey
+import org.cec.brick.engine.api.Brick
+import org.cec.brick.engine.api.BrickPlugin
+import org.cec.brick.engine.event.BrickEvent
+import org.cec.brick.engine.journal.JournalSubsystem
+import org.cec.brick.engine.journal.JournalsKey
 
 /**
- * Default implementation of public [Brick] API
+ * Default implementation of a public [Brick] API
  * @author Igor Ovsyannikov
  */
-class BrickEngine : Brick {
+class BrickEngine(
+    plugins: List<String>,
+) : Brick {
+    //    val log = Logger
     var running = false
     override val attributes = Attributes()
     private val pipeline = PipelineEngine()
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-    val plugins = listOf(StatisticsPlugin(), JournalBuffer()).associateBy { it.name }
-
-    fun collectPlugins(): Collection<BrickPlugin> {
-        return plugins.values
+    val plugins: List<BrickPlugin> = plugins.map {
+        val result = Class.forName(it).constructors[0]?.newInstance() as? BrickPlugin
+            ?: error("cannot find plugin $it")
+        result
     }
 
     override suspend fun emit(event: BrickEvent) {
@@ -38,13 +38,12 @@ class BrickEngine : Brick {
     suspend fun start() {
         if (running) return
         running = true
-        val plugins = collectPlugins()
+        val journals = JournalSubsystem(this@BrickEngine)
+        attributes.put(JournalsKey, journals)
         plugins.forEach { plugin ->
             plugin.install(pipeline)
             plugin.key?.let { attributes.put(it, plugin) }
         }
-        val journals = JournalSubsystem(this@BrickEngine)
-        attributes.put(JournalsKey, journals)
         launch(journals)
     }
 

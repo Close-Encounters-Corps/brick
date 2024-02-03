@@ -2,8 +2,8 @@ package org.cec.brick.plugins
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.cec.brick.api.BrickPlugin
 import org.cec.brick.engine.PipelineEngine
+import org.cec.brick.engine.api.BrickPlugin
 import org.cec.brick.engine.attributeKeyOf
 import java.util.concurrent.ConcurrentHashMap
 

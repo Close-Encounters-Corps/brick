@@ -3,9 +3,8 @@ package org.cec.brick.engine
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import org.cec.brick.event.BrickEvent
-import org.cec.brick.event.JournalEvent
-import org.cec.brick.util.BrickDsl
+import org.cec.brick.engine.event.BrickEvent
+import org.cec.brick.engine.event.JournalEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 

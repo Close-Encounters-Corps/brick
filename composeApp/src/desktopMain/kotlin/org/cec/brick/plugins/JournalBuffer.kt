@@ -1,9 +1,9 @@
 package org.cec.brick.plugins
 
-import org.cec.brick.api.BrickPlugin
 import org.cec.brick.engine.PipelineEngine
+import org.cec.brick.engine.api.BrickPlugin
 import org.cec.brick.engine.attributeKeyOf
-import org.cec.brick.event.JournalEvent
+import org.cec.brick.engine.event.JournalEvent
 
 val BufferKey = attributeKeyOf<JournalBuffer>("JournalBuffer")
 

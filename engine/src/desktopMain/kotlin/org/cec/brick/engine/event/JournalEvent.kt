@@ -1,10 +1,10 @@
-package org.cec.brick.event
+package org.cec.brick.engine.event
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
-import org.cec.brick.api.Brick
+import org.cec.brick.engine.api.Brick
 import org.cec.brick.util.ZonedDateTimeSerializer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
