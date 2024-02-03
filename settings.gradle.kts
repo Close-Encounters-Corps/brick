@@ -18,4 +18,4 @@ dependencyResolutionManagement {
     }
 }
 
-include(":composeApp", "engine", "gehirn")
+include(":composeApp", ":engine", ":gehirn")
