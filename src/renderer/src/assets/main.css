@@ -145,6 +145,7 @@ code {
   padding: 0 20px;
   font-size: 14px;
   line-height: 14px;
+  color: var(--ev-c-white-soft);
   opacity: 0.8;
   &:last-child {
     border: none;

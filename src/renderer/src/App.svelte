@@ -8,20 +8,17 @@
 
   // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
 
-
-  const socket = io('http://localhost:4500')
-
   const logs: Writable<Array<any>> = writable([])
-  socket.on('connect', () => {
-    console.log('connected!')
-  })
-  socket.on('event', function (raw: string) {
-    const data = JSON.parse(raw)
-    console.log(data)
-    logs.update((x) => { x.push(data); return x })
-  })
 
   const fetchLogs = () => {
+    const socket = io('http://localhost:4500')
+    socket.on('connect', () => {
+        console.log('connected!')
+    })
+    socket.on('event', function (raw: string) {
+        const data = JSON.parse(raw)
+        logs.update((x) => { x.push(data); return x })
+    })
     logs.set([])
     socket.emit('stream')
   }
@@ -32,9 +29,20 @@
   <div class="ui container">
     <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions a11y-missing-attribute-->
     <button class="ui button" on:click={fetchLogs}>Request logs</button>
-    {#each $logs as data}
-      <p>{data.event}</p>
-    {/each}
+    <div class="ui container logs">
+      <p>
+        {#each $logs as data}
+          {data.event}
+          <br>
+        {/each}
+      </p>
+    </div>
   </div>
   <Versions />
 </Fomantic>
+
+<style>
+.ui.container.logs {
+  max-height: 40%;
+}
+</style>

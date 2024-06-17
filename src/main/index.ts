@@ -1,11 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { ChildProcess, exec, spawn } from 'child_process'
+import { ChildProcess, spawn } from 'child_process'
 import icon from '../../resources/icon.png?asset'
 
-const backendDir = '../../engine'
-var backend: ChildProcess | undefined
 
 function createWindow(): void {
   // Create the browser window.
@@ -30,13 +28,14 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  backend = spawn('go', ['run', 'main.go'], {
-    cwd: join(__dirname, backendDir),
-    stdio: 'pipe'
-  })
-  backend.stdout?.on('data', (x: string) => {
-    console.log(`backend: ${x}`)
-  })
+  if (!is.dev) {
+    const backend = spawn('main.exe', {
+        stdio: 'pipe'
+    })
+    backend.stdout?.on('data', (x: string) => {
+        console.log(`backend: ${x}`)
+    })
+}
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
@@ -80,14 +79,6 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
-})
-
-app.on('before-quit', async () => {
-  await new Promise((resolve) => {
-    exec('go run main.go -stop', {
-      cwd: join(__dirname, backendDir)
-    }, resolve)
-  })
 })
 
 // In this file you can include the rest of your app"s specific main process
